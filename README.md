@@ -56,6 +56,25 @@ A frozen-sprite GPU comparison covered sharp, tilted, rotated, and stretched
 renders before/after shader optimization. The three blurred cases were
 pixel-identical; the sharp case differed by at most one 8-bit channel step.
 
+## Releases
+
+Download the Apple Silicon zip from [Releases](https://github.com/egon-r/dynamic-cursors-macos/releases/latest),
+extract it, and open `Dynamic Cursors.app`. The app is ad-hoc signed, not
+Apple-notarized; if macOS blocks the downloaded app, use **System Settings →
+Privacy & Security → Open Anyway** after reviewing the source.
+
+Pushing a `v*` version tag builds and publishes the zip automatically:
+
+```sh
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+The single workflow uses GitHub's standard `macos-26` M1 runner, which is
+[free for public repositories](https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories).
+It skips private repositories. No signing secrets or paid runners are needed;
+ordinary commits do not trigger builds.
+
 ## Implementation
 
 - Poll global pointer position at display refresh cadence; sample the current
