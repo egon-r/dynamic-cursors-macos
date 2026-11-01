@@ -69,6 +69,8 @@ built and ran successfully without modifying the toolchain.
   property, then own one balanced CoreGraphics hide/show count. Restore on
   pause, quit, SIGINT/SIGTERM, and session sleep/inactivation. Do not hide the
   native cursor unless the replacement frame was submitted successfully.
+  Reconcile actual native visibility even on idle frames; if it reappears,
+  balance the previous hide before reacquiring it instead of stacking hides.
 
 Physics and blur are adapted from the MIT-licensed Linux fork; see `LICENSE`.
 The Hyprland hooks, renderer integration, and Lua configuration are not used.

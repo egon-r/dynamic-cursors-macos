@@ -239,7 +239,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let screen = cursorScreen(containing: snapshot.position)
             let hz = Double(screen?.maximumFramesPerSecond ?? 60)
             let frame = physics.frame(snapshot: snapshot, at: ProcessInfo.processInfo.systemUptime, refreshRate: hz, settings: settings)
-            if system.isReplacing, frame == lastDrawnFrame, snapshot.revision == lastDrawnRevision { return }
+            if system.isReplacing, frame == lastDrawnFrame, snapshot.revision == lastDrawnRevision {
+                try system.beginReplacement()
+                return
+            }
             var pointerScreenRendered = false
             for (panel, view) in overlays {
                 view.cursorFrame = frame

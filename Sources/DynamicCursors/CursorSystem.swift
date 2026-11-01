@@ -84,7 +84,17 @@ final class CursorSystem {
 
     func beginReplacement() throws {
         guard Thread.isMainThread else { throw Failure.mainThreadRequired }
-        guard !isReplacing else { return }
+        if isReplacing {
+            guard systemCursorVisible == true else { return }
+            // Another visibility change can reveal the native cursor despite
+            // our ownership flag. Balance our old hide before reacquiring it;
+            // blindly hiding again would accumulate counts across recoveries.
+            endReplacement()
+            guard !isReplacing else {
+                throw Failure.windowServer("Rebalancing cursor visibility", CGError.failure.rawValue,
+                                          " The existing hide count could not be released.")
+            }
+        }
 
         // Set this before calling: even a failed private API request is followed
         // by a best-effort rollback rather than leaving background access set.
