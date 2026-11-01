@@ -63,6 +63,17 @@ extract it, and open `Dynamic Cursors.app`. The app is ad-hoc signed, not
 Apple-notarized; if macOS blocks the downloaded app, use **System Settings →
 Privacy & Security → Open Anyway** after reviewing the source.
 
+Choose Homebrew or mise; do not run both copies at once.
+
+### Install with Homebrew
+
+On Apple Silicon Macs running macOS 27 or newer:
+
+```sh
+brew install --cask egon-r/tap/dynamic-cursors
+open "/Applications/Dynamic Cursors.app"
+```
+
 ### Install with mise
 
 On Apple Silicon Macs, the built-in [GitHub backend](https://mise.jdx.dev/dev-tools/backends/github.html)
@@ -95,6 +106,9 @@ The single workflow uses GitHub's standard `macos-26` M1 runner, which is
 [free for public repositories](https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories).
 It skips private repositories. No signing secrets or paid runners are needed;
 ordinary commits do not trigger builds.
+
+For Homebrew users, also update the version and checksum in
+[`homebrew-tap/Casks/dynamic-cursors.rb`](https://github.com/egon-r/homebrew-tap/blob/main/Casks/dynamic-cursors.rb).
 
 ## Implementation
 
