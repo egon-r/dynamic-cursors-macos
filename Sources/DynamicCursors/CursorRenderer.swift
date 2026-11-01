@@ -2,9 +2,10 @@ import AppKit
 import MetalKit
 
 private struct CursorUniforms {
-    var screen, tip, size, hotspot, delta, boundsMin, boundsMax: SIMD2<Float>
-    var rotation, stretchAngle, stretch, scale: Float
-    var samples, padding: UInt32
+    var screen, tip, inverseSize, hotspot, delta, boundsMin, boundsMax: SIMD2<Float>
+    var rotationBasis, stretchAxis: SIMD2<Float>
+    var inverseStretch, inverseSquash, inverseScale: Float
+    var samples: UInt32
 }
 
 final class CursorRenderer {
@@ -44,7 +45,8 @@ final class CursorRenderer {
 
     private func uniforms(frame: CursorFrame, screen: CGRect) -> CursorUniforms {
         let tip = CGPoint(x: frame.position.x - screen.minX, y: screen.maxY - frame.position.y)
-        let delta = CGPoint(x: frame.displacement.x, y: -frame.displacement.y)
+        let samples = frame.displacement == .zero ? 1 : max(1, min(64, frame.samples))
+        let delta = samples == 1 ? CGPoint.zero : CGPoint(x: frame.displacement.x, y: -frame.displacement.y)
         let c = cos(frame.rotation), s = sin(frame.rotation)
         let axis = CGPoint(x: cos(frame.stretchAngle), y: sin(frame.stretchAngle))
         var minX = Double.infinity, minY = Double.infinity
@@ -68,14 +70,14 @@ final class CursorRenderer {
         return CursorUniforms(
             screen: SIMD2(Float(screen.width), Float(screen.height)),
             tip: SIMD2(Float(tip.x), Float(tip.y)),
-            size: SIMD2(Float(frame.size.width), Float(frame.size.height)),
+            inverseSize: SIMD2(1 / Float(frame.size.width), 1 / Float(frame.size.height)),
             hotspot: SIMD2(Float(frame.hotspot.x), Float(frame.hotspot.y)),
             delta: SIMD2(Float(delta.x), Float(delta.y)),
             boundsMin: SIMD2(Float(minX - 2), Float(minY - 2)),
             boundsMax: SIMD2(Float(maxX + 2), Float(maxY + 2)),
-            rotation: Float(frame.rotation), stretchAngle: Float(frame.stretchAngle),
-            stretch: Float(frame.stretch), scale: Float(frame.scale),
-            samples: UInt32(max(1, min(64, frame.samples))), padding: 0)
+            rotationBasis: SIMD2(Float(c), Float(s)), stretchAxis: SIMD2(Float(axis.x), Float(axis.y)),
+            inverseStretch: 1 / Float(frame.stretch), inverseSquash: 1 / Float(squash),
+            inverseScale: 1 / Float(frame.scale), samples: UInt32(samples))
     }
 
     @discardableResult
@@ -137,9 +139,10 @@ final class CursorRenderer {
     #include <metal_stdlib>
     using namespace metal;
     struct Uniforms {
-        float2 screen, tip, size, hotspot, delta, boundsMin, boundsMax;
-        float rotation, stretchAngle, stretch, scale;
-        uint samples, padding;
+        float2 screen, tip, inverseSize, hotspot, delta, boundsMin, boundsMax;
+        float2 rotationBasis, stretchAxis;
+        float inverseStretch, inverseSquash, inverseScale;
+        uint samples;
     };
     struct Vertex { float4 position [[position]]; float2 point; };
     vertex Vertex cursorVertex(uint id [[vertex_id]], constant Uniforms &u [[buffer(0)]]) {
@@ -152,17 +155,17 @@ final class CursorRenderer {
     }
     fragment float4 cursorFragment(Vertex v [[stage_in]], constant Uniforms &u [[buffer(0)]], texture2d<float> sprite [[texture(0)]]) {
         constexpr sampler linearSampler(coord::normalized, address::clamp_to_zero, filter::linear);
-        float c = cos(u.rotation), s = sin(u.rotation);
-        float2 axis = float2(cos(u.stretchAngle), sin(u.stretchAngle));
+        float c = u.rotationBasis.x, s = u.rotationBasis.y;
+        float2 axis = u.stretchAxis;
         float4 accumulated = float4(0);
         for (uint i = 0; i < 64; ++i) {
             if (i >= u.samples) break;
             float2 q = v.point - u.tip + u.delta * (float(i) / float(u.samples));
             q = float2(c * q.x + s * q.y, -s * q.x + c * q.y);
-            float along = dot(q, axis) / u.stretch;
-            float across = dot(q, float2(-axis.y, axis.x)) / (1.0 - 0.5 * (u.stretch - 1.0));
+            float along = dot(q, axis) * u.inverseStretch;
+            float across = dot(q, float2(-axis.y, axis.x)) * u.inverseSquash;
             q = axis * along + float2(-axis.y, axis.x) * across;
-            float2 uv = (q / u.scale + u.hotspot) / u.size;
+            float2 uv = (q * u.inverseScale + u.hotspot) * u.inverseSize;
             if (any(uv < 0.0) || any(uv > 1.0)) continue;
             accumulated += sprite.sample(linearSampler, uv);
         }

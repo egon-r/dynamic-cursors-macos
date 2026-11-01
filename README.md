@@ -52,6 +52,10 @@ Local verification also exercised SIGTERM restoration. The Command Line Tools
 linker emitted warnings about two nonexistent Developer search paths; the app
 built and ran successfully without modifying the toolchain.
 
+A frozen-sprite GPU comparison covered sharp, tilted, rotated, and stretched
+renders before/after shader optimization. The three blurred cases were
+pixel-identical; the sharp case differed by at most one 8-bit channel step.
+
 ## Implementation
 
 - Poll global pointer position at display refresh cadence; sample the current
@@ -63,6 +67,9 @@ built and ran successfully without modifying the toolchain.
 - Average the transformed sprite along its displacement in a Metal fragment
   shader, with premultiplied alpha. Exposure is strength / refresh rate, capped
   at 250 ms. Stationary history shrinks the smear back to a sharp sprite.
+  Sharp frames sample once instead of repeating the same lookup eight times.
+  Rotation/stretch bases and reciprocals are computed once per frame, avoiding
+  per-fragment trigonometry and per-sample transform divisions.
 - Render through transparent, click-through overlays. Reuse the existing
   frame when idle rather than submitting identical GPU work.
 - Enable the private, process-local `SetsCursorInBackground` connection
