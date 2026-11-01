@@ -63,6 +63,26 @@ extract it, and open `Dynamic Cursors.app`. The app is ad-hoc signed, not
 Apple-notarized; if macOS blocks the downloaded app, use **System Settings →
 Privacy & Security → Open Anyway** after reviewing the source.
 
+### Install with mise
+
+On Apple Silicon Macs, the built-in [GitHub backend](https://mise.jdx.dev/dev-tools/backends/github.html)
+can install the release directly; no plugin or GitHub Pages setup is needed:
+
+```sh
+mise use --global 'github:egon-r/dynamic-cursors-macos[bin_path=Dynamic Cursors.app/Contents/MacOS]@latest'
+open "$(mise where github:egon-r/dynamic-cursors-macos)/Dynamic Cursors.app"
+```
+
+`bin_path` preserves the `.app` bundle and exposes its `DynamicCursors`
+executable on `PATH`. Use `open` to launch the app without keeping a terminal
+attached. The bundle stays in mise's install directory, not `/Applications`;
+this does not add a login item.
+
+For a newer release, quit the app, run `mise upgrade github:egon-r/dynamic-cursors-macos`,
+then repeat the `open` command.
+
+### Publish a release
+
 Pushing a `v*` version tag builds and publishes the zip automatically:
 
 ```sh
