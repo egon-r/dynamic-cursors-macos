@@ -69,7 +69,7 @@ On Apple Silicon Macs, the built-in [GitHub backend](https://mise.jdx.dev/dev-to
 can install the release directly; no plugin or GitHub Pages setup is needed:
 
 ```sh
-mise use --global 'github:egon-r/dynamic-cursors-macos[bin_path=Dynamic Cursors.app/Contents/MacOS]@latest'
+mise use --global 'github:egon-r/dynamic-cursors-macos[bin_path=Dynamic Cursors.app/Contents/MacOS]@0.1.0'
 open "$(mise where github:egon-r/dynamic-cursors-macos)/Dynamic Cursors.app"
 ```
 
@@ -78,8 +78,9 @@ executable on `PATH`. Use `open` to launch the app without keeping a terminal
 attached. The bundle stays in mise's install directory, not `/Applications`;
 this does not add a login item.
 
-For a newer release, quit the app, run `mise upgrade github:egon-r/dynamic-cursors-macos`,
-then repeat the `open` command.
+The exact version avoids mise's release-age filter for a newly published
+release. For an update, quit the app and rerun `mise use` with the newer
+version, then repeat the `open` command.
 
 ### Publish a release
 
